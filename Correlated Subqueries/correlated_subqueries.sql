@@ -93,13 +93,15 @@ WHERE wage >
 -- by the given orchestra.
 
 --An example of a correlated subquery in SELECT looks like this:
+--This query finds the name of the cat together with the average age 
+--of all cats with the same name.
 
 SELECT 
    name, 
    (SELECT AVG(age) FROM cats c2 WHERE c2.name = c1.name)
 FROM cats c1
 
---This query finds the name of the cat together with the average age of all cats with the same name.
+--------------------------------------------------------------------------------
 
 SELECT name,rating,city_origin,
 	(SELECT COUNT(*)
