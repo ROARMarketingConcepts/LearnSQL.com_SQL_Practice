@@ -111,3 +111,19 @@ SELECT name,rating,city_origin,
 FROM orchestras o
 WHERE o.country_origin='Germany'
 
+
+--For each orchestra show the name of the orchestra, the name of the city where the 
+--orchestra received the highest rating for its performance, and the rating.
+
+
+--Use correlated subqueries. In the subquery select the highest rating received by the orchestra. 
+--Use the subquery in WHERE to filter concerts when the orchestra was given this rating.
+
+SELECT o.name, c.city, c.rating
+FROM concerts c
+LEFT JOIN orchestras o
+ON c.orchestra_id=o.id
+WHERE c.rating IN
+	(SELECT MAX(c.rating)
+	FROM concerts c
+	WHERE c.orchestra_id=o.id)
