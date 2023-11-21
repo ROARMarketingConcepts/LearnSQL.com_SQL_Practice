@@ -127,3 +127,38 @@ WHERE c.rating IN
 	(SELECT MAX(c.rating)
 	FROM concerts c
 	WHERE c.orchestra_id=o.id)
+
+--For each instrument, show its type, maker, the owner's name, the corresponding orchestra name, 
+--and the number of concerts (name this column as concert_number) in which the owner played from 
+--2013 to 2016. Take into consideration only instruments produced in 2013 or earlier.
+
+--First select the type, maker, the owner's name, and the corresponding orchestra name for each 
+--instrument produced in 2013 or earlier (no need for a subquery). Then add a correlated subquery 
+--to compute the number of concerts the owner played between 2013 and 2016.
+
+--The structure of the query is similar to the final query from the previous part (German orchestras in Ukraine):
+
+-- SELECT 
+--   name,
+--   rating,
+--   city_origin,
+--   (SELECT
+--     COUNT(*)
+--   FROM concerts
+--   WHERE orchestras.id = concerts.orchestra_id AND country = 'Ukraine') AS count
+-- FROM orchestras
+-- WHERE country_origin = 'Germany'
+
+
+SELECT i.type,i.maker,m.name,o.name,
+	(SELECT COUNT(c.orchestra_id)     
+	FROM concerts c                    
+	WHERE year BETWEEN 2013 AND 2016
+    AND c.orchestra_id=o.id) AS concert_number   -- get separate counts for each orchestra_id
+FROM instruments i
+LEFT JOIN members m
+ON i.owner_id=m.id
+LEFT JOIN orchestras o
+ON m.orchestra_id=o.id
+WHERE i.production_year<=2013
+
