@@ -50,3 +50,20 @@ AVG(total_price) OVER(ORDER BY placed
 total_price/AVG(total_price) OVER(ORDER BY placed
                       ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)
 FROM single_order
+
+--You may wonder what the default window frame is when it's not explicitly specified. 
+--This may differ between databases, but the most typical rule is as follows:
+
+--If you don't specify an ORDER BY clause within OVER(...), the whole partition of 
+--rows will be used as the window frame.
+
+--If you do specify an ORDER BY clause within OVER(...), the database will assume 
+--RANGE UNBOUNDED PRECEDING as the window frame. 
+
+--For each row sorted by the year, show its department_id, year, amount, the average 
+--amount from all departments in the given year and the difference between the amount and the average amount.
+
+SELECT department_id,year,amount,
+AVG(amount) OVER(ORDER BY year RANGE CURRENT ROW),
+amount-AVG(amount) OVER(ORDER BY year RANGE CURRENT ROW)
+FROM revenue
