@@ -85,3 +85,138 @@ LEFT JOIN music m
   ON m.supporter_id = s.supporter_id
 LEFT JOIN traveling tr
   ON tr.supporter_id = s.supporter_id
+
+--Note: it is not possible to create correlated subqueries with CTEs.
+
+-- Show the average total amount raised in successful projects that had 
+-- more than 10 donations.
+
+WITH ten_or_more AS
+
+(
+  SELECT project_id, 
+    p.minimal_amount, 
+    COUNT(d.id) AS count_donations, 
+    SUM(amount) AS sum_amount
+  FROM project p
+  LEFT JOIN donation d
+  ON d.project_id=p.id
+  GROUP BY 1,2
+  HAVING SUM(amount) > minimal_amount
+  
+)
+
+SELECT AVG(sum_amount)
+FROM ten_or_more t
+WHERE count_donations>10
+
+-- Among successful projects, those that raised 100% to 150% of the minimum amount 
+-- are good projects, whereas those that raised more than 150% are great projects. 
+-- Show the number of projects along with a string representing how good the project 
+-- is (good projects or great projects) name the column tag.
+
+
+WITH good_projects AS
+
+(
+  SELECT project_id,minimal_amount,SUM(amount)
+  FROM donation d
+  LEFT JOIN project p
+  ON d.project_id=p.id
+  GROUP BY 1,2
+  HAVING SUM(amount) BETWEEN minimal_amount AND 1.5*minimal_amount
+),
+
+great_projects AS 
+
+(
+  SELECT project_id,minimal_amount,SUM(amount)
+  FROM donation d
+  LEFT JOIN project p
+  ON d.project_id=p.id
+  GROUP BY 1,2
+  HAVING SUM(amount) > 1.5*minimal_amount
+)
+
+SELECT COUNT(project_id) AS count, 'good projects' AS tag
+FROM good_projects
+UNION
+SELECT COUNT(project_id) AS count, 'great projects' AS tag
+FROM great_projects
+
+
+-- Nested CTEs: Once we define a CTE, we can freely use it in subsequent CTEs.
+
+
+-- First, find daily sums of amount_earned in each city. 
+
+WITH sums AS
+
+(
+  SELECT c.id, c.name AS city, ds.day, SUM(amount_earned) AS total_amt
+  FROM daily_sales ds
+  LEFT JOIN salesman s
+    ON ds.salesman_id=s.id
+  LEFT JOIN city c
+    ON s.city_id=c.id
+  GROUP BY c.id,c.name,ds.day
+ ),
+  
+
+--Find the average daily amount for all cities for all days. 
+
+average AS
+
+(
+  SELECT AVG(total_amt) AS avg_amt
+  FROM sums 
+)  -- Answer = 2543.483
+
+
+-- Finally, show the id and name of each city plus the number of daily sums 
+-- that exceeded the average daily amount for each given city.
+
+SELECT id,city AS name,COUNT(*)
+FROM sums
+WHERE total_amt>
+(SELECT avg_amt FROM average)
+GROUP BY 1,2
+
+
+-- First, find the total number of customers in each region on each day. 
+-- Then, calculate the average number of customers across all regions on each day.
+
+-- Finally, show the day with the lowest average across all regions (that means, 
+-- show the day and the avg_region_customers).
+
+WITH total_customers_region_day AS
+
+(
+  SELECT region,day,SUM(customers) AS total_customers
+  FROM daily_sales ds
+  LEFT JOIN salesman s
+  ON s.id=ds.salesman_id
+  LEFT JOIN city c
+  ON s.city_id=c.id
+  GROUP BY 1,2
+  ORDER BY 1,2
+),
+
+--Then, calculate the average number of customers across all regions on each day.
+
+avg_cust_cnt_day_all_regions AS 
+
+(
+  SELECT day, AVG(total_customers) AS avg_region_customers
+  FROM total_customers_region_day
+  GROUP BY day
+) 
+
+SELECT day,avg_region_customers
+FROM avg_cust_cnt_day_all_regions
+WHERE avg_region_customers=
+  (
+    SELECT MIN(avg_region_customers)
+  FROM avg_cust_cnt_day_all_regions
+  )
+
