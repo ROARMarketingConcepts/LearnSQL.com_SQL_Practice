@@ -10,9 +10,9 @@ WITH total_amts AS
   SELECT salesman_id, first_name, last_name, c.name AS city, SUM(amount_earned) AS total_amt
 	FROM daily_sales ds
 	LEFT JOIN salesman s
-	ON ds.salesman_id=s.id
+		ON ds.salesman_id=s.id
 	LEFT JOIN city c
-	ON s.city_id=c.id
+		ON s.city_id=c.id
 	GROUP BY 1,2,3,4
 	ORDER BY 1,2,3,4
   
@@ -32,7 +32,7 @@ WITH total_amts AS
   SELECT first_name, last_name, ta.city, avg_amt, total_amt
  	FROM total_amts ta
  	LEFT JOIN city_avgs ca 
- 	ON ta.city=ca.city
+ 		ON ta.city=ca.city
  )
  
  SELECT first_name, last_name,
@@ -98,14 +98,14 @@ GROUP BY group_name
 WITH total_earnings AS
 
 (	
-  	SELECT salesman_id, c.name AS city, 
-  	SUM(amount_earned) AS sum_amt_earned
+  SELECT salesman_id, c.name AS city, 
+  SUM(amount_earned) AS sum_amt_earned
 	FROM daily_sales ds
 	LEFT JOIN salesman s
-	ON ds.salesman_id=s.id
-    LEFT JOIN city c
+		ON ds.salesman_id=s.id
+  LEFT JOIN city c
     ON c.id=s.city_id
-    GROUP BY 1,2 
+  GROUP BY 1,2 
 ),
 
 city_avgs AS 
@@ -126,7 +126,7 @@ salesman_label AS
     CASE WHEN sum_amt_earned > average THEN 'Good' ELSE 'Bad' END AS label
   FROM total_earnings te
   LEFT JOIN city_avgs ca
-  ON ca.city=te.city
+  	ON ca.city=te.city
 ),
 
 total_items_sold AS 
@@ -148,4 +148,50 @@ SELECT
 FROM total_items_sold
 GROUP BY label
   
+-------------------------------------------------------------------- 
+
+-- A city is performing well if their total number of items sold is above 
+-- average for their region. For each city show its name and its label, either 
+-- 'Above average' or 'Below average', depending on how well the city performs.
+
+WITH city_totals AS
+
+(
+  SELECT c.name AS city, c.region AS region,
+  SUM(items_sold) AS total_sold
+	FROM daily_sales ds
+	LEFT JOIN salesman s
+		ON ds.salesman_id=s.id
+  LEFT JOIN city c
+  	ON s.city_id=c.id
+	GROUP BY 1,2
+	ORDER BY 1,2
+),
+
+region_avgs AS
+
+(
+  SELECT region, AVG(total_sold) AS region_avg
+	FROM city_totals
+	GROUP BY 1
+),
+
+summary_table AS
+
+(
+  SELECT city,ct.region,total_sold, region_avg
+	FROM city_totals ct
+	LEFT JOIN region_avgs ra
+		ON ct.region=ra.region
   
+)
+
+SELECT city AS name, 
+CASE WHEN total_sold>region_avg 
+	THEN 'Above average' 
+	ELSE 'Below average' END AS label
+FROM summary_table
+
+
+
+
