@@ -77,3 +77,97 @@ WHERE length(w)<5
 )
 
 SELECT * FROM words;
+
+
+-- We want to see each employee in the company with their data and the 
+-- path from Boss to that person.
+
+
+-- Create a new recursive CTE called hierarchy. The content of the boss CTE from the 
+-- template should become the anchor member. Then, use UNION ALL and modify the external 
+-- query from the template so that it uses recursion. Remember that the id of the superior 
+-- must match the id that you got from the previous recursive step. Thanks to it, as the number 
+-- of subordinates in our table is finite, the query will eventually stop. In other words, the termination 
+-- check is not explicitly provided.
+
+-- In the outer query, simply select all the information from your recursive CTE.
+-- Don't forget that you start your recursive queries with WITH RECURSIVE.
+
+WITH RECURSIVE hierarchy AS (
+  SELECT
+    id,
+    first_name,
+    last_name,
+    superior_id,
+    'Boss' AS path
+  FROM employee
+  WHERE superior_id IS NULL
+  UNION ALL 
+  SELECT
+    employee.id,
+    employee.first_name,
+    employee.last_name,
+    employee.superior_id,
+    hierarchy.path || '->' || employee.last_name
+  FROM employee, hierarchy
+  WHERE employee.superior_id = hierarchy.id
+)
+
+SELECT *
+FROM hierarchy;
+
+----------------------------------------------------------
+
+-- Use the boss's last_name instead of 'boss' for the path
+
+WITH RECURSIVE hierarchy AS (
+  SELECT
+    id,
+    first_name,
+    last_name,
+    superior_id,
+    CAST(last_name AS text) AS path
+  FROM employee
+  WHERE superior_id IS NULL
+  UNION ALL 
+  SELECT
+    employee.id,
+    employee.first_name,
+    employee.last_name,
+    employee.superior_id,
+    hierarchy.path || '->' || employee.last_name
+  FROM employee, hierarchy
+  WHERE employee.superior_id = hierarchy.id
+)
+
+SELECT *
+FROM hierarchy;
+
+-- Your task is to show the following columns:
+
+-- id – ID of each department,
+-- name – name of the department,
+-- part_of – ID of the department one level up,
+-- path – defined as all names from the root department until the given department, separated with slashes ('/').
+-- Remember the root department has a NULL part_of id.
+
+WITH RECURSIVE hierarchy AS (
+  SELECT
+    id,
+    name,
+    part_of,
+    CAST(name AS text) AS path
+  FROM department
+  WHERE part_of IS NULL
+  UNION ALL 
+  SELECT
+    department.id,
+    department.name,
+    department.part_of,
+    hierarchy.path || '/' || department.name
+  FROM department, hierarchy
+  WHERE department.part_of= hierarchy.id
+)
+
+SELECT *
+FROM hierarchy;
