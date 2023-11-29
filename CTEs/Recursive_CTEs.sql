@@ -272,3 +272,19 @@ FROM travel
 WHERE count_places = 4
 ORDER BY total_time ASC;
 
+
+-- Show numeric values from 5 to 100 in increments of 5 (column value). As the second 
+-- column (named sum), show the sum of all multiplications so far.
+
+WITH RECURSIVE math_function (value, sum) AS (
+  SELECT 5,5
+  UNION ALL
+  SELECT 
+    value+5,
+    sum+(value+5)
+  FROM math_function
+  WHERE value <100
+)
+
+SELECT *
+FROM math_function
