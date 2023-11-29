@@ -171,3 +171,52 @@ WITH RECURSIVE hierarchy AS (
 
 SELECT *
 FROM hierarchy;
+
+-- We want to visit every city starting from London. List all paths which start in London and 
+-- visit all six cities in table city.
+
+-- Show the following columns:
+
+-- path – the list of consecutive cities separated by '->', e.g. London->Oxford->Cambridge...),
+-- last_lat and last_lon coordinates of the last city in the path,
+-- total_distance – how much we need to travel altogether,
+-- count_places – a helper column that should show the number of cities in the path.
+-- Order the results by the total_distance.
+
+-- You can use the function lat_lon_distance(lat1,lon1,lat2,lon2) that we prepared for you 
+-- to calculate the distance between two cities.
+
+-- The london CTE should become your anchor member. The second part of the outer query should 
+-- become the recursive member, but you need to construct the path column by referring to the path
+-- from the previous recursive step. In the outer query, show only those paths where the number of 
+-- cities equals 6 and order the rows in descending order by total_distance.
+
+-- The last problem is how to construct the termination check. We can use the function position(a IN b),
+-- which will return 0 if the string a is not contained in the string b. In other words, we only want to 
+-- add a certain city if it didn't appear in the path so far.
+
+WITH RECURSIVE travel(path,last_lat,last_lon,total_distance,count_places) AS 
+
+(
+  SELECT
+      name::text AS path,
+      lat, 
+      lon, 
+      0::float AS total_distance,
+      1 AS count_places
+  FROM city
+  WHERE name = 'London' 
+  UNION ALL
+  SELECT
+    t.path || '->' || c.name AS path,
+    c.lat,
+    c.lon,
+    t.total_distance+lat_lon_distance(t.last_lat, t.last_lon, c.lat, c.lon) AS total_distance,
+    t.count_places+1
+FROM city c, travel t
+WHERE position(c.name IN t.path)=0  
+)
+
+SELECT *
+FROM travel
+WHERE count_places = 6
