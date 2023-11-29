@@ -220,3 +220,55 @@ WHERE position(c.name IN t.path)=0
 SELECT *
 FROM travel
 WHERE count_places = 6
+
+------------------------------------------------------------------------------
+
+-- This time, we're traveling between cities (table german_city with 
+-- columns: id and name) in Germany and we don't calculate the distance using
+-- a gps function. Instead, you are given a second table called road (columns: 
+-- city_from, city_to, time) with average trip durations on a given route from one city to another.
+
+-- Let's travel between the four cities starting in Berlin. Your task is to list the 
+-- travel paths starting in Berlin and covering all four cities. Order the paths in 
+-- descending order by total_time.
+
+-- In your answer, provide the following columns:
+
+-- path – city names separated by '-',
+-- last_id – ID of the last city,
+-- total_time – total time spent driving,
+-- count_places – the number of places visited, should equal 4.
+
+-- This one can be tough, so here is a hint: in the recursive member, you 
+-- will have to join the recursive table you create with the table road, 
+-- and the table german_city twice (one JOIN for city_from, the other one for city_to). 
+-- In the termination check, use position(x IN path) = 0 to make sure that 
+-- city x has not been visited so far.
+
+WITH RECURSIVE travel (path, last_id,total_time,count_places) AS
+  
+ (SELECT 
+      name::text AS path,
+      id,
+      0,
+      1
+  FROM german_city
+  WHERE name = 'Berlin' 
+  UNION ALL
+  SELECT
+    t.path||'-'||gc.name,
+    gc.id,
+    t.total_time+r.time,
+    t.count_places+1
+  FROM travel t 
+  LEFT JOIN road r
+    ON t.last_id=r.city_from
+  LEFT JOIN german_city gc
+    ON gc.id=r.city_to
+  WHERE position(gc.name IN t.path)=0)
+  
+  SELECT *
+FROM travel
+WHERE count_places = 4
+ORDER BY total_time ASC;
+

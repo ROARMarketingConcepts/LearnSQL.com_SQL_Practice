@@ -217,6 +217,6 @@ FROM avg_cust_cnt_day_all_regions
 WHERE avg_region_customers=
   (
     SELECT MIN(avg_region_customers)
-  FROM avg_cust_cnt_day_all_regions
+    ROM avg_cust_cnt_day_all_regions
   )
 
