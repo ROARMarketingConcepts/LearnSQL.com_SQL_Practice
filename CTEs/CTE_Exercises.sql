@@ -119,8 +119,57 @@ SELECT maximal_average, client_id
 FROM average_client
 WHERE maximal_average = (SELECT MAX(maximal_average) FROM average_client);
 
+-- The company would like to know which project are the most important.
+
+-- For project for which employees devoted more than 40 hours, add ' (VIP)' 
+-- at the end of its name. The name should look like this: PROJECT NAME (VIP). 
+-- Mind the space between project name and (VIP).
+
+WITH over40hour_projects AS 
+
+(SELECT project_id
+FROM allocation
+GROUP BY project_id
+HAVING SUM(hours_spent)>40)
+
+UPDATE project
+SET name=name||' (VIP)'
+WHERE id IN (SELECT * FROM over40hour_projects)
+
+-- We've created another table called project_worktime. 
+-- It has the following columns: project_id and avg_worktime.
+-- Your task is to use the table allocation and insert the average 
+--number of hours spent on each project into the new table project_worktime. 
+--Each time, insert the project_id and the average hours_spent. Additionally, 
+--do not insert any data for project_id = 1.
+
+WITH total_hours_project AS 
+
+(
+  	SELECT project_id, employee_id, SUM(hours_spent) AS total_hours
+	FROM allocation
+  	WHERE project_id != 1
+  	GROUP BY 1,2
+),
+
+avg_work_time AS 
+
+(
+  SELECT
+    project_id,
+    AVG(total_hours) AS avg_worktime
+  FROM total_hours_project
+  GROUP BY 1
+)
+
+INSERT INTO project_worktime
+SELECT *
+FROM avg_work_time
 
 
+  
+  
+  
 
 
 
