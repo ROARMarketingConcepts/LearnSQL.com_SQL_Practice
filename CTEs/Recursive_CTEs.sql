@@ -288,3 +288,58 @@ WITH RECURSIVE math_function (value, sum) AS (
 
 SELECT *
 FROM math_function
+
+-- We want to travel between four cities presented in the table destination starting 
+-- from Warsaw. We have another table called ticket which lists all possible flying connections 
+-- for us. Your task is to find the path which will be cheapest in terms of the total tickets cost. 
+-- List all paths starting in Warsaw which go through all four cities. Order the paths by 
+-- descending total_cost.
+
+-- In your answer, provide the following columns:
+
+-- path – city names separated by '->',
+-- last_id – ID of the last city,
+-- total_cost – total cost of tickets,
+-- count_places – the number of places visited, should equal 4.
+
+
+WITH RECURSIVE travel (path, last_id,total_cost,count_places) AS
+  
+ (SELECT 
+      name::text AS path,
+      id,
+      0,
+      1
+  FROM destination
+  WHERE name = 'Warsaw' 
+  UNION
+  SELECT
+    tr.path||'->'||d.name,
+    d.id,
+    tr.total_cost+t.cost,
+    tr.count_places+1
+  FROM travel tr 
+  LEFT JOIN ticket t
+    ON tr.last_id=t.city_from
+  LEFT JOIN destination d
+    ON d.id=t.city_to
+  WHERE position(d.name IN tr.path)=0)
+  
+SELECT *
+FROM travel
+WHERE count_places = 4
+ORDER BY total_cost DESC
+
+
+-- Generate the Fibonacci sequence to 100
+
+
+WITH RECURSIVE fibonacci(prev1, prev2) AS (
+  SELECT 0, 1
+  UNION ALL
+  SELECT prev2, prev1 + prev2 AS fib_seq
+  FROM fibonacci
+  WHERE prev1 < 89
+)
+SELECT prev1 fib_seq
+FROM fibonacci;
