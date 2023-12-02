@@ -105,3 +105,10 @@ SELECT day, phone
 FROM repairs_ranking
 WHERE rank=2
 
+-- For each phone, show the following information: phone, 
+-- day, revenue and the revenue for the first repair for each 
+-- phone (column name first_revenue)
+
+SELECT phone,day,revenue,
+FIRST_VALUE(revenue) OVER(PARTITION BY phone ORDER BY day) AS first_revenue
+FROM repairs
