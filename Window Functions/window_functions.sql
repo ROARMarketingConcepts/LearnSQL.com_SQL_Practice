@@ -67,3 +67,41 @@ SELECT department_id,year,amount,
 AVG(amount) OVER(ORDER BY year RANGE CURRENT ROW),
 amount-AVG(amount) OVER(ORDER BY year RANGE CURRENT ROW)
 FROM revenue
+
+-- Take the statistics for website_id = 1. For each row, show the day, 
+-- the number of clicks on that day and the median of clicks in May 2016 
+-- (calculated as the 16th value of all 31 values in the column clicks when 
+-- sorted by the number of clicks).
+
+SELECT day, clicks, 
+NTH_VALUE(clicks,16) OVER(ORDER BY clicks
+    ROWS BETWEEN UNBOUNDED PRECEDING
+      AND UNBOUNDED FOLLOWING)
+FROM statistics
+WHERE website_id=1
+
+
+-- For each row, show the following columns: 
+-- store_id, day, customers and the number of clients 
+-- in the 5th greatest store in terms of the number of 
+-- customers on that day.
+
+SELECT store_id,day,customers,
+NTH_VALUE(customers,5) OVER(PARTITION BY day ORDER BY customers DESC 
+                           ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+FROM sales
+
+
+-- For each day, show the following two columns: day and the name of the 
+-- second most frequently repaired phone on that day. Only take into account free_repairs.
+
+WITH repairs_ranking AS
+
+(SELECT day,phone,
+RANK() OVER(PARTITION BY day ORDER BY free_repairs DESC)
+FROM repairs)
+
+SELECT day, phone
+FROM repairs_ranking
+WHERE rank=2
+
