@@ -2,7 +2,7 @@
 -- We'll start with ROWS, because they are a bit easier to explain than RANGE. 
 -- The general syntax is as follows:
 
-ROWS BETWEEN lower_bound AND upper_bound
+-- ROWS BETWEEN lower_bound AND upper_bound
 
 -- You know BETWEEN already – it's used to define a range. So far, you've used it to define a range of values – 
 -- this time, we're going to use it to define a range of rows instead. What are the two bounds? The bounds 
@@ -15,7 +15,7 @@ ROWS BETWEEN lower_bound AND upper_bound
 -- UNBOUNDED FOLLOWING – the last possible row.
 
 -- The lower bound must come BEFORE the upper bound. In other words, a construction like: ...
-ROWS BETWEEN CURRENT ROW AND UNBOUNDED PRECEDING 
+-- ROWS BETWEEN CURRENT ROW AND UNBOUNDED PRECEDING 
 --doesn't make sense and you'll get an error if you run it.
 
 -- Take a look at the example below. The query computes:
@@ -187,4 +187,46 @@ COUNT(id) OVER() AS count_2,
 ROUND(CAST(COUNT(id) OVER(PARTITION BY amount_worth) AS numeric)/COUNT(id) OVER()*100,0) AS percentage
 FROM giftcard
 ORDER BY amount_worth
+
+-- For each procedure, show the following information: procedure_date, category, doctor_id, 
+-- patient_id, name, price and the total sum of prices from all procedures from the first day 
+-- until the end of the current day.
+
+SELECT procedure_date, category, doctor_id, patient_id, name, price,
+SUM(price) OVER(ORDER BY procedure_date
+               RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+FROM procedure
+
+
+-- For each procedure, show the following information: procedure_date, name, price, 
+-- the procedure_date of the newest procedure in the same category together with its price. 
+-- The newest procedure is the procedure with the greatest ID. Show the last two colums as 
+-- most_recent_date and most_recent_price.
+
+WITH newest_procedures AS
+(
+SELECT procedure_date, name, category, price,
+MAX(id) OVER(PARTITION BY category)
+FROM procedure
+)
+
+SELECT np.procedure_date, np.name, np.price, p.procedure_date AS most_recent_date,
+p.price AS most_recent_price
+FROM newest_procedures np
+LEFT JOIN procedure p
+ON np.max=p.id
+
+-----------------------------------------------------------
+
+-- For each procedure, show the following information: procedure_date, 
+-- name, price, category, score, the price of the best procedure (in terms of 
+-- the score) from the same category (column best_procedure) and the difference 
+-- between price and best_procedure (column difference).
+
+SELECT 
+  procedure_date, name, price, category, score, 
+  FIRST_VALUE(price) OVER(PARTITION BY category ORDER BY score DESC) AS best_procedure,
+  price - FIRST_VALUE(price) OVER(PARTITION BY category ORDER BY score DESC) AS difference
+FROM procedure;
+
 
