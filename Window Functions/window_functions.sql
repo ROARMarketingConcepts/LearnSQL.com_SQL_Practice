@@ -112,3 +112,61 @@ WHERE rank=2
 SELECT phone,day,revenue,
 FIRST_VALUE(revenue) OVER(PARTITION BY phone ORDER BY day) AS first_revenue
 FROM repairs
+
+
+-- Show the order date, the total value of the orders placed on that day 
+-- (as the daily_sum column) and the running average of the revenue from the 
+-- previous 6 days and the current day (as the running_average column). Round 
+-- this average to two decimal places. Sort the orders from the oldest to the most recent.
+
+SELECT order_date,SUM(total_amount) AS daily_sum,
+ROUND(AVG(SUM(total_amount)) OVER(ORDER BY order_date ROWS BETWEEN
+                             6 PRECEDING AND CURRENT ROW),2) AS running_average
+FROM orders
+GROUP BY order_date
+ORDER BY 1
+
+
+-- For each country, show the:
+-- Country name.
+-- Year of registration (name this column registration_year).
+-- Number of new customers from this country that joined that year (name this column new_customers_count).
+-- Running total of the customers from this country that registered in the current or previous years (name this column running_total).
+-- Number of registered users from this country the year its first user registered (name this column first_year).
+-- Number of registered users from that country in the last year (name this column last_year).
+-- To get year from the registration_year, use:
+
+-- EXTRACT(year FROM registration_date)
+
+WITH running_totals AS 
+
+(SELECT DISTINCT country,EXTRACT(YEAR FROM registration_date) AS registration_year,
+COUNT(customer_id) AS new_customers_count,
+SUM(COUNT(customer_id)) OVER(PARTITION by country 
+                             ORDER BY EXTRACT(YEAR FROM registration_date) 
+                             RANGE UNBOUNDED PRECEDING) AS running_total
+FROM customers
+GROUP BY 1,2
+ORDER BY 1,2)
+
+SELECT country,registration_year,new_customers_count,running_total,
+FIRST_VALUE(new_customers_count) OVER(PARTITION BY country ORDER BY registration_year) AS first_year,
+LAST_VALUE(new_customers_count) OVER(PARTITION BY country ORDER BY registration_year 
+                              ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_year
+FROM running_totals
+
+
+
+-- Divide the books into 4 groups based on their rating. For each group (bucket), 
+-- show its number (column bucket), the minimal and maximal rating in that bucket.
+
+
+WITH ratings_quartiles AS
+(SELECT rating, NTILE(4) OVER(ORDER BY rating) AS bucket
+FROM book
+ORDER BY rating)
+
+SELECT bucket,MIN(rating),MAX(rating)
+FROM ratings_quartiles
+GROUP BY bucket
+ORDER BY bucket
