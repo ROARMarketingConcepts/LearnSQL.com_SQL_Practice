@@ -170,3 +170,21 @@ SELECT bucket,MIN(rating),MAX(rating)
 FROM ratings_quartiles
 GROUP BY bucket
 ORDER BY bucket
+
+-- Show:
+
+-- distinctive amount_worth values of giftcards,
+-- count of the number of giftcards with this value that were 
+-- ever purchased (shown as count_1),
+-- count of all giftcards ever purchased (shown as count_2),
+-- show the percentage that the respective giftcard type constitutes in relation 
+-- to all gift cards. Show the last column rounded to integer values and name it percentage.
+
+
+SELECT DISTINCT amount_worth, 
+COUNT(id) OVER(PARTITION BY amount_worth) AS count_1,
+COUNT(id) OVER() AS count_2,
+ROUND(CAST(COUNT(id) OVER(PARTITION BY amount_worth) AS numeric)/COUNT(id) OVER()*100,0) AS percentage
+FROM giftcard
+ORDER BY amount_worth
+
