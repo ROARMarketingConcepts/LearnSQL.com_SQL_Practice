@@ -221,6 +221,30 @@ SELECT *
 FROM travel
 WHERE count_places = 6
 
+
+WITH RECURSIVE hierarchy AS (
+  SELECT
+    id,
+    name,
+    invited_by_id,
+    CAST(name AS text) AS path
+    1 AS count_invites
+  FROM student
+  WHERE invited_by_id IS NULL
+  UNION ALL 
+  SELECT
+    student.id,
+    student.name,
+    student.invited_by_id,
+    hierarchy.path || '->' || student.name
+    hierarchy.count_invites+1
+  FROM student, hierarchy
+  WHERE student.invited_by_id = hierarchy.id AND position(student.name IN hierarchy.path)=0
+)
+ 
+SELECT *
+FROM hierarchy;
+
 ------------------------------------------------------------------------------
 
 -- This time, we're traveling between cities (table german_city with 
@@ -343,3 +367,101 @@ WITH RECURSIVE fibonacci(prev1, prev2) AS (
 )
 SELECT prev1 fib_seq
 FROM fibonacci;
+
+
+-- Show all odd numbers from 0 to 20.
+
+WITH RECURSIVE counter (num) AS (
+  SELECT 1
+  UNION ALL
+  SELECT num + 2
+  FROM counter
+  WHERE num+2 < 20
+)
+
+SELECT * 
+FROM counter;
+
+-- Show the path of invitations for each student; name this column path. 
+-- For example, if Mary was invited by Alice and Alice wasn't invited by 
+-- anyone, the path for Mary should look like this:
+-- Alice->Mary
+-- Include each student's id, name, and invited_by_id in the results.
+
+WITH RECURSIVE hierarchy AS (
+  SELECT
+    id,
+    name,
+    invited_by_id,
+    CAST(name AS text) AS path
+  FROM student
+  WHERE invited_by_id IS NULL
+  UNION ALL 
+  SELECT
+    student.id,
+    student.name,
+    student.invited_by_id,
+    hierarchy.path || '->' || student.name
+  FROM student, hierarchy
+  WHERE student.invited_by_id = hierarchy.id
+)
+
+SELECT *
+FROM hierarchy;
+
+-- Display the length (as an integer) of the longest invitation chain. 
+-- Name this column longest_chain. For example, if Mary was invited by Carl, 
+-- Carl was invited by Alice, and Alice was not invited by anyone, then the 
+-- chain length is 3.
+
+WITH RECURSIVE hierarchy AS (
+  SELECT
+    id,
+    name,
+    invited_by_id,
+    1 AS distance
+  FROM student
+  WHERE invited_by_id IS NULL
+  UNION ALL
+  SELECT
+    student.id,
+    student.name,
+    student.invited_by_id,
+    hierarchy.distance + 1
+  FROM student, hierarchy
+  WHERE student.invited_by_id = hierarchy.id
+)
+
+SELECT --*
+  MAX(distance) AS longest_chain
+FROM hierarchy;
+
+-- Display the id, name, and invited_by_id of each student that was directly or i
+-- ndirectly invited by Robert Palmer (id = 5). (Robert himself should not be displayed.)
+-- A student who is indirectly invited by Robert has been invited by someone Robert asked 
+-- to join the website. For example, if Robert invited Marek, Marek invited Silvia, and Silvia 
+-- invited Jonas, both Silvia and Jonas are indirect invites.
+
+WITH RECURSIVE hierarchy AS (
+  SELECT
+    id,
+    name,
+    invited_by_id,
+    '' AS path
+  FROM student
+  WHERE id=5 
+  UNION ALL 
+  SELECT
+    student.id,
+    student.name,
+    student.invited_by_id,
+    hierarchy.path || '->' || student.name
+  FROM student, hierarchy
+  WHERE student.invited_by_id = hierarchy.id
+)
+
+SELECT id,name,invited_by_id
+FROM hierarchy
+WHERE id !=5
+
+
