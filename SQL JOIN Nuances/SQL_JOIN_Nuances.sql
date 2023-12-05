@@ -16,3 +16,24 @@ LEFT JOIN purchase_menu_item pmi
 ON mi.id=pmi.menu_item_id
 GROUP BY mi.name
 ORDER BY sales_count DESC
+
+
+-- For each month of 2023, calculate the total revenue and the revenue for 
+-- each of the 'baked goods' and 'drinks' categories. Show the following columns: 
+-- revenue_month, total_revenue, baked_goods_revenue, and drinks_revenue. Order the 
+-- results by month.
+
+SELECT DISTINCT EXTRACT(MONTH FROM purchase_date) AS revenue_month,
+SUM(price) AS total_revenue,
+SUM(CASE WHEN category='baked goods' THEN price ELSE 0 END) AS baked_goods_revenue,
+SUM(CASE WHEN category = 'drinks' THEN price ELSE 0 END) AS drinks_revenue
+FROM purchase p
+LEFT JOIN purchase_menu_item pmi
+	ON pmi.purchase_id=p.id
+LEFT JOIN menu_item mi
+	ON mi.id=pmi.menu_item_id
+WHERE purchase_date > '2022-12-31'
+GROUP BY EXTRACT(MONTH FROM purchase_date)
+
+
+
