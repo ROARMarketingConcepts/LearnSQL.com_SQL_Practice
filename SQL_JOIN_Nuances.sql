@@ -36,4 +36,34 @@ WHERE purchase_date > '2022-12-31'
 GROUP BY EXTRACT(MONTH FROM purchase_date)
 
 
+-- Show the speaker's name and the count of non-native languages spoken by each speaker 
+-- (call this column language_count). Some speakers may not yet be assigned to any language; 
+-- display 0 instead of omitting that speaker. Sort the results by the number of languages in 
+-- descending order.
 
+-- Use a LEFT JOIN to include speakers who have not yet chosen any non-native language. Remember 
+-- that COUNT(*) and COUNT(column_name) behave differently. COUNT(*) counts all rows, whereas 
+-- COUNT(column_name) counts only the rows in which the given column is not null. If we use COUNT(*) 
+-- in our case, the number of languages shown for speakers with no non-native languages will be 1 rather than 0! 
+-- To get the correct result, use COUNT(language_id) instead.
+
+SELECT s.name,COUNT(ls.language_id) AS language_count
+FROM speaker s
+LEFT JOIN language_speaker ls
+ON s.id=ls.speaker_id AND native='f'
+GROUP BY 1
+ORDER BY 2 DESC
+
+-- Display the speaker's name and the count of chatrooms in which the speaker participates. 
+-- Only count the chatrooms that have been active, defined by the last message sent in 2020 or later. 
+-- Call this column chatroom_count. Sort the results by chatroom_count in descending order.
+
+SELECT s.name, COUNT(c.id) AS chatroom_count
+FROM speaker s
+LEFT JOIN chatroom_speaker cs
+ON cs.speaker_id=s.id 
+LEFT JOIN chatroom c
+ON c.id=cs.chatroom_id 
+AND EXTRACT(year FROM last_active_at) >=2020  -- look at null rows in c.id that are generated
+GROUP BY 1
+ORDER BY 2 DESC
