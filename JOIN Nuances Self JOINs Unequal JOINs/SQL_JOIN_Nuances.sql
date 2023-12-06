@@ -67,3 +67,18 @@ ON c.id=cs.chatroom_id
 AND EXTRACT(year FROM last_active_at) >=2020  -- look at null rows in c.id that are generated
 GROUP BY 1
 ORDER BY 2 DESC
+
+-- Display the speaker ID, the speaker's name, and the average lifetime of chatrooms for each speaker 
+-- (avg_lifetime). The lifetime of a chatroom is the time between its creation and the last time when 
+-- it was actively used (i.e., a message was sent by one of the users). If the average lifetime is NULL, 
+-- we would like to display "0 days". Sort the results by the average lifetime in descending order.
+
+SELECT s.id,s.name, AVG(COALESCE(last_active_at-created_at,'0 days')) AS avg_lifetime
+FROM speaker s
+LEFT JOIN chatroom_speaker cs
+ON cs.speaker_id=s.id 
+LEFT JOIN chatroom c
+ON c.id=cs.chatroom_id 
+GROUP BY 1,2
+ORDER BY avg_lifetime DESC
+
