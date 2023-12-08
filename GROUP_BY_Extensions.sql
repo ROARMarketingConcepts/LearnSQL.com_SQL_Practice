@@ -66,3 +66,31 @@ SELECT name,ROUND(AVG(total_price),2) AS avg_purchase_price
 FROM totals_by_customer_purchase_id
 GROUP BY 1
 ORDER BY 2 DESC
+
+
+-- Find the average principal amounts for the following two grouping combinations:
+
+-- year and quarter
+-- country
+-- Show the following columns in the query result: year, quarter, country, and avg_principal.
+
+SELECT year, quarter, NULL AS country, AVG(principal) AS avg_principal
+FROM loan
+GROUP BY 1,2
+UNION ALL
+SELECT NULL AS year,NULL AS quarter,country,AVG(principal) AS avg_principal
+FROM loan
+GROUP BY 3
+ORDER BY 1,2,3
+
+-- OR
+
+
+SELECT
+  year,
+  quarter,
+  country,
+  AVG(principal) AS avg_principal
+FROM loan
+GROUP BY GROUPING SETS ((year,quarter),country)
+
