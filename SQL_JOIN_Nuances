@@ -82,29 +82,45 @@ ON c.id=cs.chatroom_id
 GROUP BY 1,2
 ORDER BY avg_lifetime DESC
 
--- There is one more caveat when using LEFT JOIN and its friends. There is a subtle difference 
--- between the conditions in the ON and WHERE clauses for these JOINs. The ON condition is evaluated 
--- when the tables are joined. The WHERE condition is applied after the rows have been joined. Take a 
--- look at this example:
+----------------------------------------------------------------------------------------------------
 
-SELECT
-  course.name,
-  lecturer.name
-FROM course
-LEFT JOIN lecturer
-  ON course.lecturer_id = lecturer.id
-WHERE lecturer.id = 3
+WITH speakers_languages_table AS
 
--- The query will list all courses but only those that are taught by the lecturer with id = 3. 
--- Other courses will not have lecturer information listed, even if there is a lecturer assigned to them.
+(SELECT *
+FROM speaker s
+LEFT JOIN language_speaker ls
+ON s.id=ls.speaker_id)
 
-SELECT *
-FROM subject
-LEFT JOIN lecturer
-  ON subject.lecturer_id = lecturer.id
-  AND lecturer.id = 3
+studying_speakers AS 
 
--- Note that for INNER JOINs conditions in the ON and WHERE clauses are effectively the same.
+(SELECT s.id,s.name AS speaker2,l.id AS studying_language_id,l.name
+FROM speaker s
+LEFT JOIN language_speaker ls
+ON s.id=ls.speaker_id
+LEFT JOIN language l
+ON ls.language_id=l.id
+WHERE native='f')
+
+SELECT speaker1, speaker2
+FROM native_speakers ns
+INNER JOIN studying_speakers ss
+ON ns.native_language_id=ss.studying_language_id
+
+-- There is one more caveat when using LEFT JOIN and its friends. There is a subtle 
+-- difference between the conditions in the ON and WHERE clauses for these JOINs. The 
+-- ON condition is evaluated when the tables are joined. The WHERE condition is applied 
+-- after the rows have been joined. 
+
+-- Show the title of each book and the name of its author 
+-- — but only if the author was born in the 20th century.
+
+-- Otherwise, the author's name field should be NULL.
+
+SELECT b.title,a.name
+FROM book b
+LEFT JOIN author a
+ON b.author_id=a.id
+AND a.birth_year BETWEEN 1901 AND 2000
 
 
 
