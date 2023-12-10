@@ -106,5 +106,69 @@ LEFT JOIN lecturer
 
 -- Note that for INNER JOINs conditions in the ON and WHERE clauses are effectively the same.
 
+-- For products that weren't sold even once between 2015-02-01 and 2015-02-05, 
+-- show the product name (rename the column to product_name), it's price and the 
+-- producer's name (rename the column to company_name). You should display all products 
+-- that haven't been sold in this interval, also the ones that don't belong to any company.
 
+
+-- First you have to LEFT JOIN the sales_history to the product table. Mind that we are interested 
+-- ONLY in products sold BETWEEN the 2015-02-01 AND 2015-02-05 so we need to add filtering before 
+-- the LEFT JOIN as applied:
+
+-- AND date BETWEEN '2015-02-01' AND '2015-02-05'
+
+-- Then we can safely join the producer table. We'd like to display all products, 
+-- even the ones that belong to no company, so we need to use LEFT JOIN.
+
+-- However, mind that we wanted to return the name of products that weren't sold 
+-- on that day, so we have to apply one final condition:
+
+-- WHERE sh.product_id IS NULL
+
+SELECT 
+    p.name AS product_name,
+  price,
+    pr.name AS company_name
+    
+FROM product p
+LEFT JOIN department d
+ON p.department_id=d.id
+LEFT JOIN sales_history s
+ON s.product_id=p.id
+AND date BETWEEN '2015-02-01' AND '2015-02-05'
+LEFT JOIN producer pr
+ON pr.id=p.producer_id
+LEFT JOIN nutrition_data n
+ON n.product_id=p.id
+ AND pr.name IS NULL
+WHERE s.product_id IS NULL
+
+Show the name and price of each product in the 'fruits' and 'vegetables' 
+departments. Consider only those products that are not produced by 'GoodFoods'.
+
+SELECT p.name,price
+    
+FROM product p
+LEFT JOIN department d
+  ON p.department_id=d.id
+LEFT JOIN producer pr
+  ON pr.id=p.producer_id
+WHERE d.name IN ('fruits','vegetables') 
+  AND (pr.name != 'GoodFoods' OR pr.name IS NULL)
+
+
+-- List all pairs of full siblings. Full siblings are people who have 
+-- the same mother and the same father. Name the columns with sibling 
+-- names younger_sibling and older_sibling (use column year_born to identify who is younger).
+
+-- You can assume that in our database no two siblings were born in the same year 
+-- and there are no more than two siblings per family.
+
+SELECT ys.name AS younger_sibling, os.name AS older_sibling
+FROM person ys
+LEFT JOIN person os
+  ON ys.mother_id=os.mother_id 
+    AND os.father_id=ys.father_id
+WHERE ys.year_born > os.year_born
 
