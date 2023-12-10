@@ -172,3 +172,17 @@ LEFT JOIN person os
     AND os.father_id=ys.father_id
 WHERE ys.year_born > os.year_born
 
+-- For each group, show its ID (as group_id), language, and level, together with the ID of the room 
+-- they're in and the days when they have lectures. Consider only those groups whose lectures are always 
+-- held in the same room.
+
+SELECT t1.group_id,sg.language,group_level,t1.room_id,t1.day
+FROM timetable t1
+LEFT JOIN timetable t2
+  ON t1.group_id=t2.group_id
+LEFT JOIN student_group sg
+  ON sg.id=t1.group_id
+WHERE t1.room_id=t2.room_id
+  AND t1.day <> t2.day
+
+
