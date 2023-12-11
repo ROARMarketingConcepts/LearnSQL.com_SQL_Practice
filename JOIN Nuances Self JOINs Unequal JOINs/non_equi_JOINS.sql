@@ -60,3 +60,5 @@ INNER JOIN item i
 ON i.price > b.funds
 AND b.funds<8000
 AND i.type IN ('sculpture','painting')
+
+
