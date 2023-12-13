@@ -193,5 +193,102 @@ CASE WHEN total_sold>region_avg
 FROM summary_table
 
 
+-- For each employee from the Washington (WA) region, show the average value for all 
+-- orders they placed. Show the following columns: employee_id, first_name, last_name, 
+-- and avg_total_price (calculated as the average total order price, before discount).
+
+-- In the inner query, calculate the value of each order and select it alongside the 
+-- ID of the employee who processed it. In the outer query, join the CTE with the employees 
+-- table to show all the required information and filter the employees by region.
+
+WITH total_orders AS
+
+(SELECT o.order_id,o.employee_id,
+    SUM(unit_price * quantity) AS total_price
+  FROM orders o
+  JOIN order_items oi
+    ON o.order_id = oi.order_id
+  GROUP BY 1,2
+  ORDER BY 2,1)
+  
+SELECT e.employee_id,e.first_name,e.last_name,
+AVG(total_price) AS avg_total_price
+FROM total_orders tot
+LEFT JOIN employees e
+ON tot.employee_id=e.employee_id
+WHERE e.region='WA'
+GROUP BY 1,2,3
+
+-- For each employee, determine the average number of items they processed 
+-- per order, for all orders placed in 2016. The number of items in an order 
+-- is defined as the sum of all quantities of all items in that order. Show the 
+-- following columns: first_name, last_name, and avg_item_count. In this dataset, 
+-- two employees have the same first_name and last_name.
+
+WITH items_count AS 
+
+(SELECT o.employee_id, o.order_id, SUM(quantity) AS item_count
+  FROM order_items oi
+  JOIN orders o
+    ON o.order_id = oi.order_id
+  WHERE EXTRACT(year FROM order_date)=2016
+  GROUP BY 1,2)
+  
+SELECT
+  e.first_name,
+  e.last_name,
+  AVG(item_count) AS avg_item_count 
+FROM items_count ic
+LEFT JOIN employees e
+  ON ic.employee_id = e.employee_id
+GROUP BY e.employee_id,1,2     -- need to include employee_id in GROUP BY because some employees have
+                               -- the same first_name and last_name.
+
+
+-- For each employee, calculate the average order value (after discount) and 
+-- then show the minimum average (name the column minimal_average) and the maximum 
+-- average (name the column maximal_average) values.
+
+WITH total_order_value_by_employee AS
+
+(SELECT employee_id, oi.order_id, SUM(unit_price*quantity*(1-discount)) AS total_value
+FROM order_items oi
+LEFT JOIN orders o
+ON o.order_id=oi.order_id
+GROUP BY 1,2),
+
+avg_order_value_by_employee AS
+
+(SELECT employee_id, AVG(total_value) AS avg_value
+FROM total_order_value_by_employee
+GROUP BY 1)
+
+SELECT MIN(avg_value) AS minimal_average, MAX(avg_value) AS maximal_average
+FROM avg_order_value_by_employee
+
+-- Among orders shipped to Italy, show all orders that had an above-average total value (before discount). 
+-- Show the order_id, order_value, and avg_order_value column. The avg_order_value column should show the 
+-- same average order value for all rows.
+
+WITH order_ratings_table AS
+
+(SELECT oi.order_id,SUM(quantity*unit_price) AS total_value,
+AVG(SUM(quantity*unit_price)) OVER(ORDER BY SUM(quantity*unit_price) 
+                                   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS avg_order_value,
+CASE
+  WHEN SUM(quantity*unit_price)-AVG(SUM(quantity*unit_price)) OVER(ORDER BY SUM(quantity*unit_price) 
+                                   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) >= 0
+  THEN 'above average' ELSE 'below average' END AS rating
+
+FROM order_items oi
+LEFT JOIN orders o
+ON o.order_id=oi.order_id
+WHERE ship_country='Italy'
+GROUP BY 1)
+
+SELECT order_id,total_value AS order_value,avg_order_value
+FROM order_ratings_table
+WHERE rating='above average'
+
 
 

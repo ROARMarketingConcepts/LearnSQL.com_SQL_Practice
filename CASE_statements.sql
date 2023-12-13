@@ -19,3 +19,35 @@ from event e
 left join play p
 on e.play_id=p.id
 group by 1
+
+
+-- Before we introduce free shipping to the USA and Canada, we'd 
+-- ike to know how many orders are sent to these countries and how 
+-- many are sent to other places. Take a look:
+
+SELECT 
+  CASE
+    WHEN ship_country = 'USA' OR ship_country = 'Canada' THEN 0.0
+    ELSE 10.0
+  END AS shipping_cost,
+  COUNT(*) AS order_count
+FROM orders
+GROUP BY
+  CASE
+    WHEN ship_country = 'USA' OR ship_country = 'Canada' THEN 0.0
+    ELSE 10.0
+  END;
+
+
+-- In the SELECT clause, we used the CASE WHEN construction you've seen before. 
+-- However, you can also see that the same CASE WHEN construction appears in the 
+-- GROUP BY clause, only without the shipping_cost alias. Even though we already 
+-- defined it in the SELECT clause and gave it an alias (shipping_cost), most 
+-- databases don't allow referring to an alias in the GROUP BY clause (i.e., 
+-- we can't write GROUP BY shipping_cost). That's why we had to repeat the whole 
+-- construction. (Note that some databases, like PostgreSQL or MySQL, allow us to 
+-- refer to column aliases in GROUP BY. However, this is a feature of these databases. 
+-- The standard SQL doesn't allow it. It's best to know how to write the correct query 
+-- in both cases.)
+
+
