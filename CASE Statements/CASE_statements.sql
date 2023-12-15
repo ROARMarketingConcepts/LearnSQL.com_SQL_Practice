@@ -50,4 +50,24 @@ GROUP BY
 -- The standard SQL doesn't allow it. It's best to know how to write the correct query 
 -- in both cases.)
 
+-----------------------------------------------------------------------------------------
+
+-- Count the orders processed by employees from the 'WA' region and by all other employees. 
+-- Show two columns: employee_region (either 'WA' or 'Not WA'), and order_count.
+
+WITH region_counts AS 
+
+(SELECT e.region,
+  COUNT(CASE WHEN e.region='WA' THEN order_id ELSE NULL END) AS wa_count,
+  COUNT(CASE WHEN e.region<>'WA' OR e.region IS NULL THEN order_id ELSE NULL END) AS non_wa_count
+FROM orders o
+LEFT JOIN employees e
+ON o.employee_id=e.employee_id
+GROUP BY 1)
+
+SELECT 
+  CASE WHEN region='WA' THEN 'WA' ELSE 'Not WA' END AS employee_region,
+  CASE WHEN region='WA' THEN wa_count ELSE non_wa_count END as order_count
+FROM region_counts
+
 
