@@ -291,4 +291,62 @@ FROM order_ratings_table
 WHERE rating='above average'
 
 
+-- For each employee, show the percentage of total revenue (before discount) generated 
+-- by orders shipped to the USA and to Germany, with respect to the total revenue generated 
+-- by that employee. Show the following columns:
+
+-- employee_id.
+-- first_name.
+-- last_name.
+-- rev_percentage_usa.
+-- rev_percentage_germany.
+-- Round the percentages to two decimal places.
+
+WITH total_revenue_by_employee AS
+
+(SELECT employee_id, SUM(quantity*unit_price) AS total_revenue
+FROM order_items oi
+LEFT JOIN orders o
+  ON oi.order_id=o.order_id
+GROUP BY 1
+ORDER BY 1),
+
+usa_revenue AS
+
+(SELECT employee_id, SUM(quantity*unit_price) AS USA_revenue
+FROM order_items oi
+LEFT JOIN orders o
+  ON oi.order_id=o.order_id
+WHERE ship_country ='USA'
+GROUP BY 1
+ORDER BY 1),
+
+germany_revenue AS
+
+(SELECT employee_id, SUM(quantity*unit_price) AS germany_revenue
+FROM order_items oi
+LEFT JOIN orders o
+  ON oi.order_id=o.order_id
+WHERE ship_country ='Germany'
+GROUP BY 1
+ORDER BY 1),
+
+revenue_breakout AS 
+
+(SELECT tre.employee_id,COALESCE(usa_revenue,0) AS usa_revenue,
+  COALESCE(germany_revenue,0) AS germany_revenue,total_revenue
+FROM total_revenue_by_employee tre
+LEFT JOIN usa_revenue u
+  ON u.employee_id=tre.employee_id
+LEFT JOIN germany_revenue g
+  ON tre.employee_id=g.employee_id)
+
+SELECT e.employee_id, first_name,last_name,
+ROUND(usa_revenue/total_revenue*100,2) AS rev_percentage_usa,
+ROUND(germany_revenue/total_revenue*100,2) AS rev_percentage_germany
+FROM revenue_breakout rb
+LEFT JOIN employees e
+  ON rb.employee_id=e.employee_id
+
+
 
