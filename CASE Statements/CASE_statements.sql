@@ -99,4 +99,6 @@ ROUND(SUM(employee_2_revenue)/total_revenue*100,2) AS percentage_employee_2
 FROM country_totals
 GROUP BY 1, total_revenue
 
+-------------------------------------------------------------------------------
+
 
