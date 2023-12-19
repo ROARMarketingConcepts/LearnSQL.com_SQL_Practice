@@ -27,3 +27,24 @@ MIN(unit_price) OVER(PARTITION BY category_name) AS smallest_unit_price
 FROM products p
 LEFT JOIN categories c
 ON c.category_id=p.category_id
+
+-- Display the category name and the name of the top-selling product in each category. 
+-- Base the ranking on the total quantity of the product sold across all orders. Name the 
+-- columns: category_name, product_name. Treat the products with the same name but different 
+-- color as one product. If there are a few products with the same total quantity in a category, 
+-- display all such products.
+
+WITH rankings AS 
+
+(SELECT c.name AS category_name, p.name AS product_name, 
+DENSE_RANK() OVER(PARTITION BY c.name ORDER BY SUM(quantity) DESC) AS rank
+FROM order_item oi
+LEFT JOIN product p
+ON oi.product_id=p.id
+LEFT JOIN category c
+ON p.category_id=c.id
+GROUP BY 1,2)
+
+SELECT category_name,product_name 
+FROM rankings
+WHERE rank=1
