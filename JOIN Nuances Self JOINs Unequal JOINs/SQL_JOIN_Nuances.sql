@@ -186,3 +186,15 @@ WHERE t1.room_id=t2.room_id
   AND t1.day <> t2.day
 
 
+-- Write a query that selects the name(s) of the main categories 
+-- that have more than two clothes.
+
+SELECT ca.name
+FROM clothing cl
+LEFT JOIN category ca
+ON cl.category_id=ca.id
+WHERE parent_id IS NULL    -- filters for main categories
+GROUP BY 1
+HAVING COUNT(cl.id)>2
+
+

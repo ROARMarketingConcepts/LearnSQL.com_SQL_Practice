@@ -464,4 +464,30 @@ SELECT id,name,invited_by_id
 FROM hierarchy
 WHERE id !=5
 
+-- List all descendants of James Garcia with ID of 6. The recursive CTE will help you do 
+-- this task. Show these columns: id, first_name, last_name, father_id, and birth_year.
+
+WITH RECURSIVE hierarchy AS (
+  SELECT
+    id,
+    first_name,
+    last_name,
+    father_id,
+    birth_year
+  FROM person
+ WHERE father_id=6
+ UNION ALL 
+  SELECT
+    p.id,
+    p.first_name,
+    p.last_name,
+    p.father_id,
+    p.birth_year
+  FROM person p, hierarchy
+  WHERE p.father_id = hierarchy.id
+)
+
+SELECT *
+FROM hierarchy;
+
 
