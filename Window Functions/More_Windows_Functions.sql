@@ -48,3 +48,67 @@ GROUP BY 1,2)
 SELECT category_name,product_name 
 FROM rankings
 WHERE rank=1
+
+-- For each date, find the running average of the total revenue for the surrounding 7 days. Display:
+
+-- order_date (name the column date)
+-- The total revenue earned on this date (name the column total_price)
+-- the average revenue for the surrounding 7-day period that includes the 3 preceding and 3 following days (name the column average_revenue). Round the result to two decimal places.
+-- Sort the results by date.
+
+
+WITH cte AS (
+  SELECT
+    o.order_date,
+    SUM(p.price * oi.quantity) AS total_price
+  FROM products p
+  JOIN order_items oi
+    ON p.id = oi.product_id
+  JOIN orders o
+    ON oi.order_id = o.id
+  GROUP BY
+    o.order_date
+)
+
+SELECT
+  order_date,
+  total_price,
+  ROUND(AVG(total_price) OVER (ORDER BY order_date
+    RANGE BETWEEN INTERVAL '3' DAY PRECEDING AND INTERVAL '3' DAY FOLLOWING), 2) AS average_revenue
+FROM cte
+ORDER BY order_date;
+
+
+-- For each country having an athlete running a 200 meter distance, display:
+
+-- country_name
+-- result – the best time result in a 200 meter run, in a given country.
+-- last_name – the last name of the athlete who got this result.
+-- first_name – their first name.
+-- race_date – the date of the race in which the result was achieved.
+
+SELECT DISTINCT
+  country_name,
+    FIRST_VALUE(result) OVER(PARTITION BY nationality.id ORDER BY result) AS result,
+    FIRST_VALUE(last_name) OVER(PARTITION BY nationality.id ORDER BY result) AS last_name,
+    FIRST_VALUE(first_name) OVER(PARTITION BY nationality.id ORDER BY result) AS first_name,
+    FIRST_VALUE(race_date) OVER(PARTITION BY nationality.id ORDER BY result) AS race_date
+FROM nationality
+JOIN athlete
+  ON nationality.id = athlete.nationality_id
+JOIN result
+  ON athlete.id = result.athlete_id
+JOIN race
+  ON race.id = result.race_id
+JOIN round
+  ON round.id = race.round_id
+JOIN event
+  ON event.id = round.event_id
+JOIN discipline
+  ON discipline.id = event.discipline_id
+WHERE distance=200
+
+
+
+
+

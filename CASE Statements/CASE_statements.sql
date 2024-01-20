@@ -101,4 +101,13 @@ GROUP BY 1, total_revenue
 
 -------------------------------------------------------------------------------
 
+-- Display two columns containing the number of non meat eaters and meat eaters. Use 
+-- the following column names: non_meat_eaters and meat_eaters.
 
+
+SELECT 
+  SUM(CASE WHEN is_vegetarian OR is_vegan THEN 1 ELSE 0 END) AS non_meat_eaters,
+    SUM(CASE WHEN NOT is_vegetarian AND NOT is_vegan THEN 1 ELSE 0 END) AS meat_eaters
+FROM runner r
+LEFT JOIN diet d
+ON r.diet_id=d.id

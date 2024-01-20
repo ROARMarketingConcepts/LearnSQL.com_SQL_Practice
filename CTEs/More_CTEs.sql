@@ -349,4 +349,53 @@ LEFT JOIN employees e
   ON rb.employee_id=e.employee_id
 
 
+-- For each person who made donations in the 'music' or 'traveling' categories, show three columns:
+
+-- supporter_id
+-- min_music – That person's minimum donation amount in the music category.
+-- max_traveling – That person's maximum donation amount in the traveling category.
+
+-- First, use a CTE to find all users that donated to either music or traveling projects. 
+-- Then, use two CTEs – one for finding the minimum for music category, and one for finding 
+-- the maximum in traveling category. In each CTE, select the supporter_id. In the outer 
+-- query, join all your CTEs' results on supporter_id.
+
+-- Use LEFT JOIN to show all the results.
+
+
+WITH all_supporters AS 
+
+(SELECT supporter_id
+FROM project p
+LEFT JOIN donation d
+ON d.project_id = p.id
+WHERE category IN ('music','traveling')
+GROUP BY 1),
+
+music_supporters AS
+
+(SELECT supporter_id, MIN(amount) AS min_music
+FROM project p
+LEFT JOIN donation d
+ON d.project_id = p.id
+WHERE category IN ('music')
+GROUP BY 1),
+
+traveling_supporters AS 
+
+(SELECT supporter_id, MAX(amount) AS max_traveling
+FROM project p
+LEFT JOIN donation d
+ON d.project_id = p.id
+WHERE category IN ('traveling')
+GROUP BY 1)
+
+SELECT alls.supporter_id, min_music,max_traveling
+FROM all_supporters alls
+LEFT JOIN traveling_supporters ts
+ON ts.supporter_id=alls.supporter_id
+LEFT JOIN music_supporters ms
+ON ms.supporter_id=alls.supporter_id
+
+
 

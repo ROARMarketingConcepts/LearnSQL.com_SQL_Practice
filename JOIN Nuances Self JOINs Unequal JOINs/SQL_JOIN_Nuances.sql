@@ -197,4 +197,14 @@ WHERE parent_id IS NULL    -- filters for main categories
 GROUP BY 1
 HAVING COUNT(cl.id)>2
 
+-- Select the last name, the first name, and the date of order for all customers 
+-- surnamed Williams. Show order date only for customers who ordered after 15 June 2021.
+
+SELECT cu.last_name,cu.first_name,order_date
+FROM customer cu
+LEFT JOIN clothing_order co
+ON co.customer_id=cu.id AND order_date> '2021-06-15'  # need to do this to get customers who haven't bought anything
+WHERE cu.last_name='Williams'
+
+
 
