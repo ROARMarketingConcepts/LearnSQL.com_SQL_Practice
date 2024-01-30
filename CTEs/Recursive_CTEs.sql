@@ -491,3 +491,57 @@ SELECT *
 FROM hierarchy;
 
 
+-- Show the history of tagged versions for each document. For example, if a document version was 
+-- tagged as v1 and was then replaced by another version tagged v2, the tag history for this document 
+-- should look like this:
+
+-- v1->v2
+-- Include two columns in the result: the document ID (name the column document_id) and tag_history.
+
+WITH RECURSIVE hierarchy AS (
+  SELECT
+    id,
+    document_id,
+    previous_version_id,
+    CAST(COALESCE(tag, '') AS text) AS tag_history,
+    0 AS hierarchy_level
+  FROM document_version
+  WHERE previous_version_id IS NULL
+  
+  UNION ALL
+  
+  SELECT
+    document_version.id,
+    document_version.document_id,
+    document_version.previous_version_id,
+    CASE
+      WHEN hierarchy.tag_history = '' THEN COALESCE(document_version.tag, '')
+      ELSE
+         CASE WHEN document_version.tag IS NULL
+           THEN hierarchy.tag_history
+           ELSE hierarchy.tag_history || '->' || document_version.tag
+         END
+    END AS tag_history,
+    hierarchy_level + 1
+  FROM document_version, hierarchy
+  WHERE document_version.previous_version_id = hierarchy.id
+),
+
+document_history_and_hierarchy_level AS (
+  SELECT
+    h1.document_id,
+    h1.tag_history,
+    h1.hierarchy_level
+  FROM HIERARCHY h1
+  WHERE hierarchy_level = ( SELECT MAX( h2.hierarchy_level )
+              FROM HIERARCHY h2
+              WHERE h1.document_id = h2.document_id)
+  ORDER BY document_id
+)
+
+SELECT
+  document_id,
+  tag_history
+FROM document_history_and_hierarchy_level;
+
+
