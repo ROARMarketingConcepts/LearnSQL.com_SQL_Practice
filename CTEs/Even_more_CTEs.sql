@@ -2,6 +2,8 @@
 -- amount earned in their city.  We want to compare the average number of items sold between two groups: 
 -- the 'Good' salespeople and the 'Bad' salespeople.
 
+-- Adding a comment
+
 WITH good_bad AS 
 
 (SELECT salesman_id, c.name AS city, SUM(amount_earned) AS total_amount_earned,
