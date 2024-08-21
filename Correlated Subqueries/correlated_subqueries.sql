@@ -188,3 +188,26 @@ JOIN academic_semester AS a_s
   ON c_ed.academic_semester_id = a_s.id
 GROUP BY 3,2,1, course_edition_id
 ORDER BY 3,2,1;
+
+-- For each course edition, find the student who got the highest midterm grade among the students 
+-- who failed this course edition. Display the first and last name of the student and the course title.
+
+select
+	first_name,
+    last_name,
+    title
+from course_edition ce
+join course_enrollment cen
+on cen.course_edition_id = ce.id
+join student s
+on cen.student_id = s.id
+join course c
+on ce.course_id = c.id
+where midterm_grade >= 
+
+(select max(midterm_grade)
+from course_enrollment c_en
+where passed = False
+	and cen.course_edition_id = c_en.course_edition_id)
+    
+group by 1,2,3,course_edition_id
