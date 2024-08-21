@@ -45,3 +45,30 @@ GROUP BY 1,2
 HAVING AVG(final_grade) >= 50
 
 
+-- Show the first and last names of the lecturers who taught during the spring term 
+-- in at least two course editions. Exclude lecturers who also taught during the fall 
+-- term in at least two course editions. Group both results by first and last names.
+
+SELECT 
+	first_name,
+    last_name
+FROM course_edition ce
+JOIN academic_semester acsem
+ON ce.academic_semester_id = acsem.id
+JOIN lecturer l
+ON ce.lecturer_id = l.id
+WHERE term = 'spring'
+GROUP BY 1,2
+HAVING COUNT(ce.id) >=2
+
+EXCEPT
+
+SELECT 
+	first_name,
+    last_name
+FROM course_edition ce
+JOIN academic_semester acsem
+ON ce.academic_semester_id = acsem.id
+JOIN lecturer l
+ON ce.lecturer_id = l.id
+WHERE term = 'fall'
