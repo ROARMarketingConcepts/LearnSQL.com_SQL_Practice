@@ -162,3 +162,29 @@ LEFT JOIN orchestras o
 ON m.orchestra_id=o.id
 WHERE i.production_year<=2013
 
+-- For each course edition find the minimum passing final grade. Display the following columns:
+
+-- the calendar year,
+-- the term,
+-- the course title,
+-- the minimum passing final grade, that is the minimum final grade for the students that passed this course (name the column minimum_passing).
+-- Order the results by the calendar_year, term, and course title.
+
+SELECT
+ calendar_year,
+ term,
+ title,
+ (SELECT MIN(final_grade)
+  FROM course_enrollment
+  WHERE course_enrollment.course_edition_id = c_en.course_edition_id
+    AND passed IS TRUE
+  GROUP BY course_edition_id) AS minimum_passing
+FROM course_enrollment AS c_en
+JOIN course_edition AS c_ed
+  ON c_en.course_edition_id = c_ed.id 
+JOIN course AS c
+  ON c.id = c_ed.course_id
+JOIN academic_semester AS a_s
+  ON c_ed.academic_semester_id = a_s.id
+GROUP BY 3,2,1, course_edition_id
+ORDER BY 3,2,1;
